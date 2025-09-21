@@ -1,15 +1,12 @@
 import csv
-from operator import is_
-from pickletools import read_string1
-import re
 
 
 class Transaction:
     def __init__(self, transaction_type, amount, from_acc=None, to_acc=None):
-        self.transaction_type = transaction_type
+        self.type = transaction_type
         self.amount = amount
         self.from_acc = from_acc
-        self.to = to_acc
+        self.to_acc = to_acc
 
 
 class Customer:
@@ -18,7 +15,7 @@ class Customer:
         self.frst_name = frst_name
         self.last_name = last_name
         self.__password = password  # make password private. reference: https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes
-        self.__balance = balance
+        self.__checking_balance = balance
         self.__savings_balance = 0.0
         self.__transaction_history = []
         self.overdraft_count = 0
@@ -41,7 +38,7 @@ class Customer:
                     return False
                 return True
             if not self.is_active:
-                if self.__balance >= 0:
+                if self.__checking_balance >= 0:
                     self.is_active = True
                     print(
                         "Account reactivated. Thank you for settling your overdraft fees."
@@ -56,7 +53,7 @@ class Customer:
 
     def get_balance(self, password=None):
         if self.is_authenticated(password):
-            return self.__balance
+            return self.__checking_balance
         return False
 
     def get_savings_balance(self, password=None):
@@ -71,7 +68,7 @@ class Customer:
 
     def deposit(self, amount, password=None):
         if self.is_authenticated(password):
-            self.__balance += amount
+            self.__checking_balance += amount
             self.__transaction_history.append(
                 Transaction("deposit", amount, None, self.account_id)
             )
@@ -82,13 +79,13 @@ class Customer:
     def withdraw(self, amount, password=None):
         if self.is_authenticated(password):
             if self.check_status():
-                if amount > self.__balance:
+                if amount > self.__checking_balance:
                     print(
                         f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                     )
                     amount += 35
                     self.overdraft_count += 1
-                self.__balance -= amount
+                self.__checking_balance -= amount
                 self.__transaction_history.append(
                     Transaction("withdraw", amount, self.account_id, None)
                 )
@@ -100,14 +97,14 @@ class Customer:
     def transfer(self, amount, to_customer, password=None):
         if self.is_authenticated(password):
             if self.check_status():
-                if amount > self.__balance:
+                if amount > self.__checking_balance:
                     print(
                         f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                     )
                     amount += 35
                     self.overdraft_count += 1
-                self.__balance -= amount
-                to_customer.__balance += amount
+                self.__checking_balance -= amount
+                to_customer.__checking_balance += amount
                 transaction = Transaction(
                     "transfer", amount, self.account_id, to_customer.account_id
                 )
