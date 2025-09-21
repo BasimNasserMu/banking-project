@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 
 
 class Transaction:
@@ -7,6 +8,7 @@ class Transaction:
         self.amount = amount
         self.from_acc = from_acc
         self.to_acc = to_acc
+        self.timestamp = datetime.now()
 
 
 class Customer:
