@@ -1,6 +1,7 @@
 import csv
+from operator import is_
+from pickletools import read_string1
 import re
-from tkinter import NO
 
 
 class Transaction:
@@ -16,71 +17,106 @@ class Customer:
         self.account_id = account_id
         self.frst_name = frst_name
         self.last_name = last_name
-        self.password = password
-        self.balance = balance
-        self.savings_balance = 0.0
-        self.transaction_history = []
+        self.__password = password  # make password private. reference: https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes
+        self.__balance = balance
+        self.__savings_balance = 0.0
+        self.__transaction_history = []
         self.overdraft_count = 0
         self.is_active = True
 
-    def check_status(self):
-        if self.is_active:
-            if self.overdraft_count >= 2:
-                self.is_active = False
+    def is_authenticated(self, password):
+        if password == self.__password:
+            return True
+        print("Incorrect password. Operation aborted.")
+        return False
+
+    def check_status(self, password=None):
+        if self.is_authenticated(password):
+            if self.is_active:
+                if self.overdraft_count >= 2:
+                    self.is_active = False
+                    print(
+                        "Account deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
+                    )
+                    return False
+                return True
+            if not self.is_active:
+                if self.__balance >= 0:
+                    self.is_active = True
+                    print(
+                        "Account reactivated. Thank you for settling your overdraft fees."
+                    )
+                    return True
                 print(
-                    "Account deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
+                    "Account is inactive due to excessive overdrafts. Please deposit money or transfer money to reactivate."
                 )
                 return False
-            return True
-        if not self.is_active:
-            if self.balance >= 0:
-                self.is_active = True
-                print(
-                    "Account reactivated. Thank you for settling your overdraft fees."
-                )
-                return True
-            print(
-                "Account is inactive due to excessive overdrafts. Please deposit money or transfer money to reactivate."
-            )
             return False
+        return False
 
-    def deposit(self, amount):
-        self.balance += amount
-        self.transaction_history.append(
-            Transaction("deposit", amount, None, self.account_id)
-        )
-        self.check_status()
+    def get_balance(self, password=None):
+        if self.is_authenticated(password):
+            return self.__balance
+        return False
 
-    def withdraw(self, amount):
-        if self.check_status():
-            if amount > self.balance:
-                print(
-                    f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
-                )
-                amount += 35
-                self.overdraft_count += 1
-            self.balance -= amount
-            self.transaction_history.append(
-                Transaction("withdraw", amount, self.account_id, None)
+    def get_savings_balance(self, password=None):
+        if self.is_authenticated(password):
+            return self.__savings_balance
+        return False
+
+    def get_transaction_history(self, password=None):
+        if self.is_authenticated(password):
+            return self.__transaction_history
+        return False
+
+    def deposit(self, amount, password=None):
+        if self.is_authenticated(password):
+            self.__balance += amount
+            self.__transaction_history.append(
+                Transaction("deposit", amount, None, self.account_id)
             )
             self.check_status()
+            return True
+        return False
 
-    def transfer(self, amount, to_customer):
-        if self.check_status():
-            if amount > self.balance:
-                print(
-                    f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
+    def withdraw(self, amount, password=None):
+        if self.is_authenticated(password):
+            if self.check_status():
+                if amount > self.__balance:
+                    print(
+                        f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
+                    )
+                    amount += 35
+                    self.overdraft_count += 1
+                self.__balance -= amount
+                self.__transaction_history.append(
+                    Transaction("withdraw", amount, self.account_id, None)
                 )
-                amount += 35
-                self.overdraft_count += 1
-            self.balance -= amount
-            to_customer.balance += amount
-            transaction = Transaction(
-                "transfer", amount, self.account_id, to_customer.account_id
-            )
-            self.transaction_history.append(transaction)
-            to_customer.transaction_history.append(transaction)
-            self.check_status()
+                self.check_status()
+                return True
+            return False
+        return False
+
+    def transfer(self, amount, to_customer, password=None):
+        if self.is_authenticated(password):
+            if self.check_status():
+                if amount > self.__balance:
+                    print(
+                        f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
+                    )
+                    amount += 35
+                    self.overdraft_count += 1
+                self.__balance -= amount
+                to_customer.__balance += amount
+                transaction = Transaction(
+                    "transfer", amount, self.account_id, to_customer.account_id
+                )
+                self.__transaction_history.append(transaction)
+                to_customer.transaction_history.append(transaction)
+                self.check_status()
+                return True
+            return False
+        return False
 
 
 class Bank:
