@@ -1,2 +1,5 @@
-*\__pycache__
-*\.vscode\*
+# Ignore Python cache directories
+__pycache__/
+
+# Ignore VS Code workspace settings
+.vscode/
