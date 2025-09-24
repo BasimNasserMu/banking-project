@@ -165,7 +165,8 @@ class Customer:
 
 
 class Bank:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.customers = []
         self.transactions = []
         self.current_customer = None
@@ -246,15 +247,16 @@ class Bank:
         print("Customer not found.")
         return None
 
-    def create_account(self, frst_name, last_name, password):
+    def create_account(self, frst_name, last_name, password, opening_balance=0.0):
         if self.customers:
             last_id = max(int(customer.account_id) for customer in self.customers)
             account_id = str(last_id + 1)
         else:
             account_id = "10000"
-        new_customer = Customer(account_id, frst_name, last_name, password)
+        new_customer = Customer(
+            account_id, frst_name, last_name, password, opening_balance
+        )
         self.customers.append(new_customer)
-        self.save_data()
         print(f"Account created successfully. Your account ID is {account_id}")
         return new_customer
 
@@ -266,11 +268,21 @@ class Bank:
         return False
 
     def main(self):
-        print("Welcome to ACME Bank!")
+        print(f"Welcome to {self.name} Bank!")
         choices = ["Create new Account", "Login to Account", "Exit"]
         choice = cutie.select(choices)
-        print(f"You have selected {choices[choice]}")
-
-
-bank = Bank()
-bank.main()
+        match choice:
+            case 0:
+                print("Fill out below info:")
+                frst_name = input("First Name: ")
+                last_name = input("Last Name: ")
+                password = cutie.secure_input("Password: ")
+                opening_balance = cutie.get_number("Opening Balance: ")
+                new_account = self.create_account(
+                    frst_name, last_name, password, opening_balance
+                )
+                print(f"New Account created with Account ID: {new_account.account_id}.")
+            case 2:
+                self.save_data()
+                print("Changes saved! Goodbye..")
+                return
