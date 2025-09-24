@@ -1,7 +1,6 @@
 import csv
-from datetime import date, datetime
-import time
-from bank import Customer
+from datetime import datetime
+import cutie
 
 
 class Transaction:
@@ -188,17 +187,19 @@ class Bank:
                     )
         with open("data/transactions.csv", mode="r") as file:
             reader = csv.reader(file)
-            for row in reader:
-                if row[0] != "type":
-                    self.transactions.append(
-                        Transaction(
-                            transaction_type=row[0],
-                            amount=float(row[1]),
-                            from_acc=row[2] if row[2] != "None" else None,
-                            to_acc=row[3] if row[3] != "None" else None,
-                            timestamp=row[4],
+            rows = list(reader)
+            if rows:
+                for row in rows:
+                    if row[0] != "type":
+                        self.transactions.append(
+                            Transaction(
+                                transaction_type=row[0],
+                                amount=float(row[1]),
+                                from_acc=row[2] if row[2] != "None" else None,
+                                to_acc=row[3] if row[3] != "None" else None,
+                                timestamp=row[4],
+                            )
                         )
-                    )
 
     def save_data(self):
         with open("data/bank.csv", mode="w", newline="") as file:
@@ -264,5 +265,12 @@ class Bank:
             return True
         return False
 
+    def main(self):
+        print("Welcome to ACME Bank!")
+        choices = ["Create new Account", "Login to Account", "Exit"]
+        choice = cutie.select(choices)
+        print(f"You have selected {choices[choice]}")
+
 
 bank = Bank()
+bank.main()
