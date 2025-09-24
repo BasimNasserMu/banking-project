@@ -1,6 +1,7 @@
 import csv
 from datetime import date, datetime
 import time
+from bank import Customer
 
 
 class Transaction:
@@ -8,12 +9,14 @@ class Transaction:
         self,
         transaction_type,
         amount,
+        account_type="checking",
         from_acc=None,
         to_acc=None,
         timestamp=str(datetime.now()),
     ):
         self.type = transaction_type
         self.amount = amount
+        self.account_type = account_type
         self.from_acc = from_acc
         self.to_acc = to_acc
         self.timestamp = timestamp
@@ -72,14 +75,12 @@ class Customer:
             return False
         return False
 
-    def get_balance(self, password=None):
+    def get_balance(self, password=None, account_type="checking"):
         if self.is_authenticated(password):
-            return self.__checking_balance
-        return False
-
-    def get_savings_balance(self, password=None):
-        if self.is_authenticated(password):
-            return self.__savings_balance
+            if account_type == "checking":
+                return self.__checking_balance
+            elif account_type == "savings":
+                return self.__savings_balance
         return False
 
     def get_transaction_history(self, password=None):
@@ -87,33 +88,60 @@ class Customer:
             return self.__transaction_history
         return False
 
-    def deposit(self, amount, password=None):
+    def deposit(self, amount, password=None, account_type="checking"):
         if self.is_authenticated(password):
-            self.__checking_balance += amount
+            if account_type == "checking":
+                self.__checking_balance += amount
+            elif account_type == "savings":
+                self.__savings_balance += amount
+            else:
+                print("Invalid account type. Choose 'checking' or 'savings'.")
+                return False
             self.__transaction_history.append(
-                Transaction("deposit", amount, None, self.account_id)
+                Transaction("deposit", amount, account_type, None, self.account_id)
             )
             self.check_status()
             return True
         return False
 
-    def withdraw(self, amount, password=None):
+    def withdraw(self, amount, password=None, account_type="checking"):
         if self.is_authenticated(password):
             if self.check_status():
-                if amount > self.__checking_balance:
+                if account_type == "checking":
+                    balance = self.__checking_balance
+                elif account_type == "savings":
+                    balance = self.__savings_balance
+
+                if amount > balance and account_type == "checking":
                     print(
                         f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                     )
                     amount += 35
                     self.__overdraft_count += 1
-                self.__checking_balance -= amount
+                elif amount > balance:
+                    print(f"Amount exceeds available balance. withdraw cannot be done.")
+                    return
+
+                if account_type == "checking":
+                    self.__checking_balance -= amount
+                else:
+                    self.__savings_balance -= amount
+
                 self.__transaction_history.append(
-                    Transaction("withdraw", amount, self.account_id, None)
+                    Transaction("withdraw", amount, account_type, self.account_id, None)
                 )
                 self.check_status()
                 return True
             return False
         return False
+
+    def transfer_locally(self, amount, to_account_type, password):
+        if to_account_type == "checking":
+            if self.withdraw(amount, password, "savings"):
+                self.deposit(amount, password, to_account_type)
+        else:
+            self.withdraw(amount, password, "checking")
+            self.deposit(amount, password, "savings")
 
     def transfer(self, amount, to_customer, password=None):
         if self.is_authenticated(password):
@@ -209,6 +237,32 @@ class Bank:
                         transaction.timestamp,
                     ]
                 )
+
+    def find_customer(self, account_id):
+        for customer in self.customers:
+            if customer.account_id == account_id:
+                return customer
+        print("Customer not found.")
+        return None
+
+    def create_account(self, frst_name, last_name, password):
+        if self.customers:
+            last_id = max(int(customer.account_id) for customer in self.customers)
+            account_id = str(last_id + 1)
+        else:
+            account_id = "10000"
+        new_customer = Customer(account_id, frst_name, last_name, password)
+        self.customers.append(new_customer)
+        self.save_data()
+        print(f"Account created successfully. Your account ID is {account_id}")
+        return new_customer
+
+    def login(self, customer, password):
+        if customer.is_authenticated(password):
+            self.current_customer = password
+            print(f"Logged in succcessful to account ID: {customer.account_id}.")
+            return True
+        return False
 
 
 bank = Bank()

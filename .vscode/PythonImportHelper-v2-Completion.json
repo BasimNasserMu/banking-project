@@ -40,6 +40,14 @@
         "documentation": {}
     },
     {
+        "label": "Customer",
+        "importPath": "bank",
+        "description": "bank",
+        "isExtraImport": true,
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
         "label": "csv",
         "kind": 6,
         "isExtraImport": true,
@@ -96,7 +104,7 @@
         "kind": 6,
         "importPath": "bank",
         "description": "bank",
-        "peekOfCode": "class Transaction:\n    def __init__(\n        self,\n        transaction_type,\n        amount,\n        from_acc=None,\n        to_acc=None,\n        timestamp=str(datetime.now()),\n    ):\n        self.type = transaction_type",
+        "peekOfCode": "class Transaction:\n    def __init__(\n        self,\n        transaction_type,\n        amount,\n        account_type=\"checking\",\n        from_acc=None,\n        to_acc=None,\n        timestamp=str(datetime.now()),\n    ):",
         "detail": "bank",
         "documentation": {}
     },
