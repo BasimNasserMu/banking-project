@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import cutie
+from numpy import true_divide
 
 
 class Transaction:
@@ -59,6 +60,7 @@ class Customer:
                         "Account deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
                     )
                     return False
+                print("Account is Active")
                 return True
             if not self.is_active:
                 if self.__checking_balance >= 0:
@@ -87,7 +89,7 @@ class Customer:
             return self.__transaction_history
         return False
 
-    def deposit(self, amount, password=None, account_type="checking"):
+    def deposit(self, amount, account_type="checking", password=None):
         if self.is_authenticated(password):
             if account_type == "checking":
                 self.__checking_balance += amount
@@ -99,13 +101,13 @@ class Customer:
             self.__transaction_history.append(
                 Transaction("deposit", amount, account_type, None, self.account_id)
             )
-            self.check_status()
+            self.check_status(password)
             return True
         return False
 
-    def withdraw(self, amount, password=None, account_type="checking"):
+    def withdraw(self, amount, account_type="checking", password=None):
         if self.is_authenticated(password):
-            if self.check_status():
+            if self.check_status(password):
                 if account_type == "checking":
                     balance = self.__checking_balance
                 elif account_type == "savings":
@@ -129,7 +131,7 @@ class Customer:
                 self.__transaction_history.append(
                     Transaction("withdraw", amount, account_type, self.account_id, None)
                 )
-                self.check_status()
+                self.check_status(password)
                 return True
             return False
         return False
@@ -144,7 +146,7 @@ class Customer:
 
     def transfer(self, amount, to_customer, password=None):
         if self.is_authenticated(password):
-            if self.check_status():
+            if self.check_status(password):
                 if amount > self.__checking_balance:
                     print(
                         f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
@@ -158,7 +160,7 @@ class Customer:
                 )
                 self.__transaction_history.append(transaction)
                 to_customer.transaction_history.append(transaction)
-                self.check_status()
+                self.check_status(password)
                 return True
             return False
         return False
@@ -305,8 +307,8 @@ class Bank:
                     selected_account_index = cutie.select(account_list)
                     self.handle_current_customer(self.customers[selected_account_index])
                     while True:
-                        password = cutie.secure_input("Enter Account's Password: ")
-                        if not self.login(self.current_customer, password):
+                        pd = cutie.secure_input("Enter Account's Password: ")
+                        if not self.login(self.current_customer, pd):
                             if not cutie.select(["Try Again.", "Return to main menu."]):
                                 continue
                             self.handle_current_customer()
@@ -317,8 +319,51 @@ class Bank:
                     print(
                         f"Logged in successfully to Account Id: {self.current_customer.account_id}"
                     )
-                    
-                    continue
+                    while True:
+                        choices = [
+                            "Check Account Status",
+                            "Check Balance",
+                            "Transaction History",
+                            "Deposit",
+                            "Withdraw",
+                            "Transfer",
+                            "Exit",
+                        ]
+                        match cutie.select(choices):
+                            case 0:
+                                self.current_customer.check_status(self.password)
+                            case 1:
+                                print(
+                                    f"Checking balance: {self.current_customer.get_balance(self.password, 'checking')}"
+                                )
+                                print(
+                                    f"Savings balance: {self.current_customer.get_balance(self.password, 'savings')}"
+                                )
+                            case 2:
+                                print(
+                                    self.current_customer.get_transaction_history(
+                                        self.password
+                                    )
+                                )
+
+                            case 3:
+                                print("Deposit into:")
+                                acc_type = (
+                                    "savings"
+                                    if cutie.select(
+                                        ["Checking Account", "Savings Account"]
+                                    )
+                                    else "checking"
+                                )
+                                amount = cutie.get_number("Enter Amount to Deposit:")
+                                self.current_customer.deposit(
+                                    amount, acc_type, self.password
+                                )
+
+                            case 6 | _:
+                                self.handle_current_customer()
+                                break
+                        continue
                 case 2:
                     self.save_data()
                     print("Changes saved! Goodbye..")
