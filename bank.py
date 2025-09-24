@@ -307,16 +307,17 @@ class Bank:
                     while True:
                         password = cutie.secure_input("Enter Account's Password: ")
                         if not self.login(self.current_customer, password):
-                            print("incorrect Password.")
-                            if cutie.select(["Try Again.", "Return to main menu."]):
-                                self.handle_current_customer()
-                                break
-                            continue
-                        print(
-                            f"Logged in successfully to Account Id: {self.current_customer.account_id}"
-                        )
-                        self.handle_current_customer()
+                            if not cutie.select(["Try Again.", "Return to main menu."]):
+                                continue
+                            self.handle_current_customer()
                         break
+                    if not self.current_customer:  # Not logged in
+                        continue  # Return to Main menu
+
+                    print(
+                        f"Logged in successfully to Account Id: {self.current_customer.account_id}"
+                    )
+                    
                     continue
                 case 2:
                     self.save_data()
