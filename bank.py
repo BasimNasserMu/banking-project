@@ -269,20 +269,26 @@ class Bank:
 
     def main(self):
         print(f"Welcome to {self.name} Bank!")
-        choices = ["Create new Account", "Login to Account", "Exit"]
-        choice = cutie.select(choices)
-        match choice:
-            case 0:
-                print("Fill out below info:")
-                frst_name = input("First Name: ")
-                last_name = input("Last Name: ")
-                password = cutie.secure_input("Password: ")
-                opening_balance = cutie.get_number("Opening Balance: ")
-                new_account = self.create_account(
-                    frst_name, last_name, password, opening_balance
-                )
-                print(f"New Account created with Account ID: {new_account.account_id}.")
-            case 2:
-                self.save_data()
-                print("Changes saved! Goodbye..")
-                return
+        while True:
+            choices = ["Create new Account", "Login to Account", "Exit"]
+            choice = cutie.select(choices)
+            match choice:
+                case 0:
+                    print("Fill out below info:")
+                    frst_name = input("First Name: ")
+                    last_name = input("Last Name: ")
+                    password = cutie.secure_input("Password: ")
+                    opening_balance = cutie.get_number("Opening Balance: ")
+                    new_account = self.create_account(
+                        frst_name, last_name, password, opening_balance
+                    )
+                    print(
+                        f"New Account created with Account ID: {new_account.account_id}."
+                    )
+                    continue
+                case 1:
+                    
+                case 2:
+                    self.save_data()
+                    print("Changes saved! Goodbye..")
+                    break
