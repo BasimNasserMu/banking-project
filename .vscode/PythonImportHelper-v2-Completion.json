@@ -1,0 +1,130 @@
+[
+    {
+        "label": "TestCase",
+        "importPath": "unittest",
+        "description": "unittest",
+        "isExtraImport": true,
+        "detail": "unittest",
+        "documentation": {}
+    },
+    {
+        "label": "expectedFailure",
+        "importPath": "unittest",
+        "description": "unittest",
+        "isExtraImport": true,
+        "detail": "unittest",
+        "documentation": {}
+    },
+    {
+        "label": "TestCase",
+        "importPath": "unittest",
+        "description": "unittest",
+        "isExtraImport": true,
+        "detail": "unittest",
+        "documentation": {}
+    },
+    {
+        "label": "Customer",
+        "importPath": "bank",
+        "description": "bank",
+        "isExtraImport": true,
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
+        "label": "Transaction",
+        "importPath": "bank",
+        "description": "bank",
+        "isExtraImport": true,
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
+        "label": "csv",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "csv",
+        "description": "csv",
+        "detail": "csv",
+        "documentation": {}
+    },
+    {
+        "label": "date",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "TestCustomer",
+        "kind": 6,
+        "importPath": "tests.customer_test",
+        "description": "tests.customer_test",
+        "peekOfCode": "class TestCustomer(TestCase):\n    def setUp(self):\n        self.customer = Customer(\"000001\", \"Basim\", \"Nasser\", \"password123\", 100.0)\n        self.to_customer = Customer(\"000002\", \"Mohammed\", \"Fawaz\", \"password456\", 50.0)\n    def test_deposit_with_correct_password(self):\n        self.customer.deposit(50, password=\"password123\")\n        self.assertEqual(self.customer.get_balance(password=\"password123\"), 150.0)\n    @expectedFailure\n    def test_deposit_with_incorrect_password(self):\n        result = self.customer.deposit(50, password=\"wrongpassword\")",
+        "detail": "tests.customer_test",
+        "documentation": {}
+    },
+    {
+        "label": "TestTransaction",
+        "kind": 6,
+        "importPath": "tests.transaction_test",
+        "description": "tests.transaction_test",
+        "peekOfCode": "class TestTransaction(TestCase):\n    def test_transaction_attributes(self):\n        self.transaction = Transaction(\"deposit\", 100, None, \"000001\")\n        self.assertEqual(self.transaction.type, \"deposit\")\n        self.assertEqual(self.transaction.amount, 100)\n        self.assertIsNone(self.transaction.from_acc)\n        self.assertEqual(self.transaction.to_acc, \"000001\")",
+        "detail": "tests.transaction_test",
+        "documentation": {}
+    },
+    {
+        "label": "Transaction",
+        "kind": 6,
+        "importPath": "bank",
+        "description": "bank",
+        "peekOfCode": "class Transaction:\n    def __init__(\n        self,\n        transaction_type,\n        amount,\n        from_acc=None,\n        to_acc=None,\n        timestamp=str(datetime.now()),\n    ):\n        self.type = transaction_type",
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
+        "label": "Customer",
+        "kind": 6,
+        "importPath": "bank",
+        "description": "bank",
+        "peekOfCode": "class Customer:\n    def __init__(\n        self,\n        account_id,\n        frst_name,\n        last_name,\n        password,\n        checking_balance=0.0,\n        savings_balance=0.0,\n        transaction_history=[],",
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
+        "label": "Bank",
+        "kind": 6,
+        "importPath": "bank",
+        "description": "bank",
+        "peekOfCode": "class Bank:\n    def __init__(self):\n        self.customers = []\n        self.transactions = []\n        self.current_customer = None\n        self.password = \"\"\n        with open(\"data/bank.csv\", mode=\"r\") as file:\n            reader = csv.reader(file)\n            for row in reader:\n                if row[0] != \"account_id\":",
+        "detail": "bank",
+        "documentation": {}
+    },
+    {
+        "label": "bank",
+        "kind": 5,
+        "importPath": "bank",
+        "description": "bank",
+        "peekOfCode": "bank = Bank()",
+        "detail": "bank",
+        "documentation": {}
+    }
+]
