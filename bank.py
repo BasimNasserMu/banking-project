@@ -203,6 +203,7 @@ class Bank:
                         )
 
     def save_data(self):
+        self.handle_current_customer()
         with open("data/bank.csv", mode="w", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(
@@ -240,12 +241,20 @@ class Bank:
                     ]
                 )
 
-    def find_customer(self, account_id):
-        for customer in self.customers:
-            if customer.account_id == account_id:
-                return customer
-        print("Customer not found.")
-        return None
+    def handle_current_customer(self, customer=None):
+        if self.current_customer:
+            replaced = False
+            for i, c in enumerate(self.customers):
+                if c.account_id == self.current_customer.account_id:
+                    self.customers[i] = self.current_customer
+                    replaced = True
+                    break
+            if not replaced:
+                self.customers.append(self.current_customer)
+            self.current_customer = None
+
+        if customer:
+            self.current_customer = customer
 
     def create_account(self, frst_name, last_name, password, opening_balance=0.0):
         if self.customers:
@@ -262,14 +271,14 @@ class Bank:
 
     def login(self, customer, password):
         if customer.is_authenticated(password):
-            self.current_customer = password
-            print(f"Logged in succcessful to account ID: {customer.account_id}.")
+            self.password = password
             return True
         return False
 
     def main(self):
         print(f"Welcome to {self.name} Bank!")
         while True:
+            print("Main Menu:")
             choices = ["Create new Account", "Login to Account", "Exit"]
             choice = cutie.select(choices)
             match choice:
@@ -287,7 +296,28 @@ class Bank:
                     )
                     continue
                 case 1:
-                    
+                    account_list = []
+                    for customer in self.customers:
+                        account_list.append(
+                            f"ID: {customer.account_id}, {customer.frst_name} {customer.last_name}"
+                        )
+                    print("Select Account to log into:")
+                    selected_account_index = cutie.select(account_list)
+                    self.handle_current_customer(self.customers[selected_account_index])
+                    while True:
+                        password = cutie.secure_input("Enter Account's Password: ")
+                        if not self.login(self.current_customer, password):
+                            print("incorrect Password.")
+                            if cutie.select(["Try Again.", "Return to main menu."]):
+                                self.handle_current_customer()
+                                break
+                            continue
+                        print(
+                            f"Logged in successfully to Account Id: {self.current_customer.account_id}"
+                        )
+                        self.handle_current_customer()
+                        break
+                    continue
                 case 2:
                     self.save_data()
                     print("Changes saved! Goodbye..")
