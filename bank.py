@@ -41,7 +41,7 @@ class Customer:
         self.__password = password  # make password private. reference: https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes
         self.__checking_balance = checking_balance
         self.__savings_balance = savings_balance
-        self.__transaction_history = transaction_history
+        self.transaction_history = transaction_history
         self.__overdraft_count = overdraft_count
         self.is_active = is_active
 
@@ -83,11 +83,6 @@ class Customer:
                 return self.__savings_balance
         return False
 
-    def get_transaction_history(self, password=None):
-        if self.is_authenticated(password):
-            return self.__transaction_history
-        return False
-
     def deposit(self, amount, account_type="checking", password=None):
         if self.is_authenticated(password):
             if account_type == "checking":
@@ -97,7 +92,7 @@ class Customer:
             else:
                 print("Invalid account type. Choose 'checking' or 'savings'.")
                 return False
-            self.__transaction_history.append(
+            self.transaction_history.append(
                 Transaction("deposit", amount, account_type, None, self.account_id)
             )
             self.check_status(password)
@@ -127,7 +122,7 @@ class Customer:
                 else:
                     self.__savings_balance -= amount
 
-                self.__transaction_history.append(
+                self.transaction_history.append(
                     Transaction("withdraw", amount, account_type, self.account_id, None)
                 )
                 self.check_status(password)
@@ -136,12 +131,39 @@ class Customer:
         return False
 
     def transfer_locally(self, amount, to_account_type, password):
-        if to_account_type == "checking":
-            if self.withdraw(amount, "savings", password):
-                self.deposit(amount, to_account_type, password)
-        else:
-            self.withdraw(amount, "checking", password)
-            self.deposit(amount, "savings", password)
+        if self.is_authenticated(password):
+            if self.check_status(password):
+                if to_account_type == "savings":
+                    from_balance = self.__checking_balance
+                elif to_account_type == "checking":
+                    from_balance = self.__savings_balance
+
+                if amount > from_balance and to_account_type == "savings":
+                    print(
+                        f"Amount exceeds available checking balance. overdraft fee applied. Total amount: {amount + 35}"
+                    )
+                    amount += 35
+                    self.__overdraft_count += 1
+                elif amount > from_balance and to_account_type == "checking":
+                    print(f"Amount exceeds available balance. withdraw cannot be done.")
+                    return
+
+                if to_account_type == "checking":
+                    self.__savings_balance -= amount
+                    self.__checking_balance += amount
+                else:
+                    self.__checking_balance -= amount
+                    self.__savings_balance += amount
+
+                self.transaction_history.append(
+                    Transaction(
+                        "local transfer", amount, to_account_type, self.account_id, None
+                    )
+                )
+                self.check_status(password)
+                return True
+            return False
+        return False
 
     def transfer(self, amount, to_customer, password=None):
         if self.is_authenticated(password):
@@ -157,7 +179,7 @@ class Customer:
                 transaction = Transaction(
                     "transfer", amount, self.account_id, to_customer.account_id
                 )
-                self.__transaction_history.append(transaction)
+                self.transaction_history.append(transaction)
                 to_customer.transaction_history.append(transaction)
                 self.check_status(password)
                 return True
@@ -412,7 +434,29 @@ class Bank:
                                         )
 
                                     case 2:
-                                        print("Under Development..")
+                                        print("Select Account to transfer to:")
+                                        filtered_customers = [
+                                            acc
+                                            for acc in self.customers
+                                            if acc != self.current_customer
+                                        ]
+                                        account_list = []
+                                        for customer in filtered_customers:
+                                            account_list.append(
+                                                f"ID: {customer.account_id}, {customer.frst_name} {customer.last_name}"
+                                            )
+                                        selected_account_index = cutie.select(
+                                            account_list
+                                        )
+                                        to_account = filtered_customers[
+                                            selected_account_index
+                                        ]
+                                        amount = cutie.get_number(
+                                            "Enter amount to transfer:"
+                                        )
+                                        self.current_customer.transfer(
+                                            amount, to_account, self.password
+                                        )
                             case 6 | _:
                                 self.handle_current_customer()
                                 break
