@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 import cutie
-from numpy import true_divide
+from tabulate import tabulate
 
 
 class Transaction:
@@ -366,14 +366,36 @@ class Bank:
                                     f"Savings balance: {self.current_customer.get_balance('savings', self.password)}"
                                 )
                             case 2:
-                                transactions_list = (
-                                    self.current_customer.transaction_history
-                                )
+                                transactions_list = []
+                                for (
+                                    transaction
+                                ) in self.current_customer.transaction_history:
+                                    transactions_list.append(
+                                        [
+                                            transaction.type,
+                                            transaction.amount,
+                                            transaction.account_type,
+                                            transaction.from_acc,
+                                            transaction.to_acc,
+                                            transaction.timestamp,
+                                        ]
+                                    )
                                 if transactions_list != []:
-                                    for transaction in transactions_list:
-                                        print(
-                                            f"Type: {transaction.type}, Amount: {transaction.amount}, Account Type: {transaction.account_type}, from: {transaction.from_acc}, to: {transaction.to_acc}, Timestamp: {transaction.timestamp}"
+                                    headers = [
+                                        "Type",
+                                        "Amount",
+                                        "Account Type",
+                                        "from",
+                                        "to",
+                                        "Timestamp",
+                                    ]
+                                    print(
+                                        tabulate(
+                                            transactions_list,
+                                            headers=headers,
+                                            tablefmt="grid",
                                         )
+                                    )
                                 else:
                                     print("No Transactions.")
 
@@ -482,7 +504,7 @@ class Bank:
                                         if isinstance(transaction, Transaction):
                                             self.transactions.append(transaction)
                                             print(
-                                                f"{amount} has transfered to account: {to_account}, new balance of checking: {self.current_customer.get_balance('checking',self.password)}"
+                                                f"{amount} has transfered to account: {to_account.account_id}, new balance of checking: {self.current_customer.get_balance('checking',self.password)}"
                                             )
                             case 6 | _:
                                 self.handle_current_customer()
