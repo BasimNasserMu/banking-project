@@ -409,6 +409,7 @@ class Bank:
                                             tablefmt="grid",
                                         )
                                     )
+                                    del transactions_list
                                 else:
                                     print("No Transactions.")
 
