@@ -19,61 +19,72 @@ class TestCustomer(TestCase):
 
     def test_deposit_with_correct_password(self):
         current_token = self.customer.login(password="password123")
-        self.customer.deposit(50, token=current_token)
-        self.assertEqual(self.customer.get_balance(token=current_token), 150.0)
+        self.customer.deposit(50, token=current_token[0])  # type: ignore
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 150.0)  # type: ignore
 
     def test_deposit_with_incorrect_password(self):
         current_token = self.customer.login(password="WrongPassword")
-        result = self.customer.deposit(50, token=current_token)
+        if current_token is not None:
+            result = self.customer.deposit(50, token=current_token[0])
+        else:
+            result = self.customer.deposit(50, token=None)
         self.assertFalse(result)
         current_token = self.customer.login(password="password123")
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
 
     def test_deposit_negative_amount(self):
         current_token = self.customer.login(password="password123")
-        result = self.customer.deposit(-10, token=current_token)
+        result = self.customer.deposit(-10, token=current_token[0])  # type: ignore
         self.assertFalse(result)
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
 
     def test_withdraw_with_correct_password(self):
         current_token = self.customer.login(password="password123")
-        self.customer.withdraw(50, token=current_token)
-        self.assertEqual(self.customer.get_balance(token=current_token), 50.0)
+        self.customer.withdraw(50, token=current_token[0])  # type: ignore
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 50.0)  # type: ignore
 
     def test_withdraw_with_incorrect_password(self):
         current_token = self.customer.login(password="WrongPassword")
-        result = self.customer.withdraw(50, token=current_token)
+        if current_token is not None:
+            result = self.customer.withdraw(50, token=current_token[0])
+        else:
+            result = self.customer.withdraw(50, token=None)
         self.assertFalse(result)
         current_token = self.customer.login(password="password123")
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
 
     def test_withdraw_negative_amount(self):
         current_token = self.customer.login(password="password123")
-        result = self.customer.withdraw(-10, token=current_token)
+        result = self.customer.withdraw(-10, token=current_token[0])  # type: ignore
         self.assertFalse(result)
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
 
     def test_transfer_with_correct_password_and_sufficient_balance(self):
         current_token = self.customer.login(password="password123")
         current_token2 = self.to_customer.login(password="password456")
-        result = self.customer.transfer(40.0, self.to_customer, token=current_token)
+        result = self.customer.transfer(40.0, self.to_customer, token=current_token[0])  # type: ignore
         self.assertIsInstance(result, Transaction)
-        self.assertEqual(self.customer.get_balance(token=current_token), 60.0)
-        self.assertEqual(self.to_customer.get_balance(token=current_token2), 90.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 60.0)  # type: ignore
+        self.assertEqual(self.to_customer.get_balance(token=current_token2[0]), 90.0)  # type: ignore
 
     def test_transfer_with_incorrect_password(self):
         current_token = self.customer.login(password="wrongPassword")
-        result = self.customer.transfer(40.0, self.to_customer, token=current_token)
+        if current_token is not None:
+            result = self.customer.transfer(
+                40.0, self.to_customer, token=current_token[0]
+            )
+        else:
+            result = self.customer.transfer(40.0, self.to_customer, token=None)
         self.assertFalse(result)
         current_token = self.customer.login(password="password123")
         current_token2 = self.to_customer.login(password="password456")
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
-        self.assertEqual(self.to_customer.get_balance(token=current_token2), 50.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
+        self.assertEqual(self.to_customer.get_balance(token=current_token2[0]), 50.0)  # type: ignore
 
     def test_transfer_negative_amount(self):
         current_token = self.customer.login(password="password123")
         current_token2 = self.to_customer.login(password="password456")
-        result = self.customer.transfer(-20.0, self.to_customer, token=current_token)
+        result = self.customer.transfer(-20.0, self.to_customer, token=current_token[0])  # type: ignore
         self.assertFalse(result)
-        self.assertEqual(self.customer.get_balance(token=current_token), 100.0)
-        self.assertEqual(self.to_customer.get_balance(token=current_token2), 50.0)
+        self.assertEqual(self.customer.get_balance(token=current_token[0]), 100.0)  # type: ignore
+        self.assertEqual(self.to_customer.get_balance(token=current_token2[0]), 50.0)  # type: ignore
