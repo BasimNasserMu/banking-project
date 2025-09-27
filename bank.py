@@ -1,5 +1,6 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
+import uuid
 import cutie
 from tabulate import tabulate
 
@@ -44,15 +45,31 @@ class Customer:
         self.transaction_history = transaction_history
         self.__overdraft_count = overdraft_count
         self.is_active = is_active
+        self.tokens_list = []
 
-    def is_authenticated(self, password):
+    class Access_Token:
+        def __init__(self, minutes):
+            self.token = uuid.uuid4()
+            self.expire = datetime.now() + timedelta(minutes=minutes)
+
+    def login(self, password):
         if password == self.__password:
-            return True
-        print("Incorrect password. Operation aborted.")
+            token = self.Access_Token(1)  # 1 minute
+            self.tokens_list.append(token)
+            return token.token
+
+    def is_authenticated(self, token):
+        for accessToken in self.tokens_list:
+            if accessToken.token == token:
+                if accessToken.expire > datetime.now():
+                    return True
+                print("Token Expired. Login again.")
+                return False
+        print("Invalid Token.")
         return False
 
-    def check_status(self, password=None):
-        if self.is_authenticated(password):
+    def check_status(self, token=None):
+        if self.is_authenticated(token):
             if self.is_active:
                 if self.__overdraft_count >= 2:
                     self.is_active = False
@@ -75,16 +92,16 @@ class Customer:
             return False
         return False
 
-    def get_balance(self, account_type="checking", password=None):
-        if self.is_authenticated(password):
+    def get_balance(self, account_type="checking", token=None):
+        if self.is_authenticated(token):
             if account_type == "checking":
                 return self.__checking_balance
             elif account_type == "savings":
                 return self.__savings_balance
         return False
 
-    def deposit(self, amount, account_type="checking", password=None):
-        if self.is_authenticated(password) and amount > 0:
+    def deposit(self, amount, account_type="checking", token=None):
+        if self.is_authenticated(token) and amount > 0:
             if account_type == "checking":
                 self.__checking_balance += amount
             elif account_type == "savings":
@@ -96,16 +113,12 @@ class Customer:
                 "deposit", amount, account_type, None, self.account_id
             )
             self.transaction_history.append(transaction)
-            self.check_status(password)
+            self.check_status(token)
             return transaction
         return False
 
-    def withdraw(self, amount, account_type="checking", password=None):
-        if (
-            self.is_authenticated(password)
-            and self.check_status(password)
-            and amount > 0
-        ):
+    def withdraw(self, amount, account_type="checking", token=None):
+        if self.is_authenticated(token) and self.check_status(token) and amount > 0:
             if account_type == "checking":
                 balance = self.__checking_balance
             elif account_type == "savings":
@@ -129,16 +142,12 @@ class Customer:
                 "withdraw", amount, account_type, self.account_id, None
             )
             self.transaction_history.append(transaction)
-            self.check_status(password)
+            self.check_status(token)
             return transaction
         return False
 
-    def transfer_locally(self, amount, to_account_type, password):
-        if (
-            self.is_authenticated(password)
-            and self.check_status(password)
-            and amount > 0
-        ):
+    def transfer_locally(self, amount, to_account_type, token):
+        if self.is_authenticated(token) and self.check_status(token) and amount > 0:
             if to_account_type == "savings":
                 from_balance = self.__checking_balance
             elif to_account_type == "checking":
@@ -164,16 +173,12 @@ class Customer:
                 "local transfer", amount, to_account_type, self.account_id, None
             )
             self.transaction_history.append(transaction)
-            self.check_status(password)
+            self.check_status(token)
             return transaction
         return False
 
-    def transfer(self, amount, to_customer, password=None):
-        if (
-            self.is_authenticated(password)
-            and self.check_status(password)
-            and amount > 0
-        ):
+    def transfer(self, amount, to_customer, token=None):
+        if self.is_authenticated(token) and self.check_status(token) and amount > 0:
             if amount > self.__checking_balance:
                 print(
                     f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
@@ -187,7 +192,7 @@ class Customer:
             )
             self.transaction_history.append(transaction)
             to_customer.transaction_history.append(transaction)
-            self.check_status(password)
+            self.check_status(token)
             return transaction
         return False
 
@@ -198,7 +203,7 @@ class Bank:
         self.customers = []
         self.transactions = []
         self.current_customer = None
-        self.password = ""
+        self.current_token = ""
 
         with open("data/bank.csv", mode="r") as file:
             reader = csv.reader(file)
@@ -303,8 +308,8 @@ class Bank:
         return new_customer
 
     def login(self, customer, password):
-        if customer.is_authenticated(password):
-            self.password = password
+        self.current_token = customer.login(password)
+        if self.current_token:
             return True
         return False
 
@@ -362,14 +367,16 @@ class Bank:
                         ]
                         match cutie.select(choices):
                             case 0:
-                                if self.current_customer.check_status(self.password):
+                                if self.current_customer.check_status(
+                                    self.current_token
+                                ):
                                     print("Account is Active")
                             case 1:
                                 print(
-                                    f"Checking balance: {self.current_customer.get_balance('checking', self.password)}"
+                                    f"Checking balance: {self.current_customer.get_balance('checking', self.current_token)}"
                                 )
                                 print(
-                                    f"Savings balance: {self.current_customer.get_balance('savings', self.password)}"
+                                    f"Savings balance: {self.current_customer.get_balance('savings', self.current_token)}"
                                 )
                             case 2:
                                 transactions_list = []
@@ -416,12 +423,12 @@ class Bank:
                                 )
                                 amount = cutie.get_number("Enter Amount to Deposit:")
                                 transaction = self.current_customer.deposit(
-                                    amount, acc_type, self.password
+                                    amount, acc_type, self.current_token
                                 )
                                 if isinstance(transaction, Transaction):
                                     self.transactions.append(transaction)
                                     print(
-                                        f"{amount} has been deposited, current account balance: {self.current_customer.get_balance(acc_type, self.password)}"
+                                        f"{amount} has been deposited, current account balance: {self.current_customer.get_balance(acc_type, self.current_token)}"
                                     )
                             case 4:
                                 print("Withdraw from:")
@@ -433,16 +440,16 @@ class Bank:
                                     else "checking"
                                 )
                                 print(
-                                    f"Current Balance: {self.current_customer.get_balance(acc_type,self.password)}"
+                                    f"Current Balance: {self.current_customer.get_balance(acc_type,self.current_token)}"
                                 )
                                 amount = cutie.get_number("Enter Amount to Withdraw:")
                                 transaction = self.current_customer.withdraw(
-                                    amount, acc_type, self.password
+                                    amount, acc_type, self.current_token
                                 )
                                 if isinstance(transaction, Transaction):
                                     self.transactions.append(transaction)
                                     print(
-                                        f"{amount} has been withdrawn, current account balance: {self.current_customer.get_balance(acc_type, self.password)}"
+                                        f"{amount} has been withdrawn, current account balance: {self.current_customer.get_balance(acc_type, self.current_token)}"
                                     )
 
                             case 5:
@@ -460,13 +467,13 @@ class Bank:
                                         )
                                         transaction = (
                                             self.current_customer.transfer_locally(
-                                                amount, "checking", self.password
+                                                amount, "checking", self.current_token
                                             )
                                         )
                                         if isinstance(transaction, Transaction):
                                             self.transactions.append(transaction)
                                             print(
-                                                f"{amount} has transfered to checking, new balance of checking: {self.current_customer.get_balance('checking',self.password)}"
+                                                f"{amount} has transfered to checking, new balance of checking: {self.current_customer.get_balance('checking',self.current_token)}"
                                             )
                                     case 1:
                                         amount = cutie.get_number(
@@ -474,13 +481,13 @@ class Bank:
                                         )
                                         transaction = (
                                             self.current_customer.transfer_locally(
-                                                amount, "savings", self.password
+                                                amount, "savings", self.current_token
                                             )
                                         )
                                         if isinstance(transaction, Transaction):
                                             self.transactions.append(transaction)
                                             print(
-                                                f"{amount} has transfered to savings, new balance of savings: {self.current_customer.get_balance('savings',self.password)}"
+                                                f"{amount} has transfered to savings, new balance of savings: {self.current_customer.get_balance('savings',self.current_token)}"
                                             )
 
                                     case 2:
@@ -505,12 +512,12 @@ class Bank:
                                             "Enter amount to transfer:"
                                         )
                                         transaction = self.current_customer.transfer(
-                                            amount, to_account, self.password
+                                            amount, to_account, self.current_token
                                         )
                                         if isinstance(transaction, Transaction):
                                             self.transactions.append(transaction)
                                             print(
-                                                f"{amount} has transfered to account: {to_account.account_id}, new balance of checking: {self.current_customer.get_balance('checking',self.password)}"
+                                                f"{amount} has transfered to account: {to_account.account_id}, new balance of checking: {self.current_customer.get_balance('checking',self.current_token)}"
                                             )
                             case 6 | _:
                                 self.handle_current_customer()
