@@ -399,7 +399,7 @@ class Bank:
                                     else "checking"
                                 )
                                 print(
-                                    f"Current Balance: {self.current_customer.get_balance(self.password,acc_type)}"
+                                    f"Current Balance: {self.current_customer.get_balance(acc_type,self.password)}"
                                 )
                                 amount = cutie.get_number("Enter Amount to Withdraw:")
                                 self.current_customer.withdraw(
