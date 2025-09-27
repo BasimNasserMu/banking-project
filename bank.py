@@ -362,11 +362,16 @@ class Bank:
                                     f"Savings balance: {self.current_customer.get_balance('savings', self.password)}"
                                 )
                             case 2:
-                                print(
-                                    self.current_customer.get_transaction_history(
-                                        self.password
-                                    )
+                                transactions_list = (
+                                    self.current_customer.transaction_history
                                 )
+                                if transactions_list != []:
+                                    for transaction in transactions_list:
+                                        print(
+                                            f"Type: {transaction.type}, Amount: {transaction.amount}, Account Type: {transaction.account_type}, from: {transaction.from_acc}, to: {transaction.to_acc}, Timestamp: {transaction.timestamp}"
+                                        )
+                                else:
+                                    print("No Transactions.")
 
                             case 3:
                                 print("Deposit into:")
