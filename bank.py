@@ -84,7 +84,7 @@ class Customer:
         return False
 
     def deposit(self, amount, account_type="checking", password=None):
-        if self.is_authenticated(password):
+        if self.is_authenticated(password) and amount > 0:
             if account_type == "checking":
                 self.__checking_balance += amount
             elif account_type == "savings":
@@ -101,88 +101,94 @@ class Customer:
         return False
 
     def withdraw(self, amount, account_type="checking", password=None):
-        if self.is_authenticated(password):
-            if self.check_status(password):
-                if account_type == "checking":
-                    balance = self.__checking_balance
-                elif account_type == "savings":
-                    balance = self.__savings_balance
+        if (
+            self.is_authenticated(password)
+            and self.check_status(password)
+            and amount > 0
+        ):
+            if account_type == "checking":
+                balance = self.__checking_balance
+            elif account_type == "savings":
+                balance = self.__savings_balance
 
-                if amount > balance and account_type == "checking":
-                    print(
-                        f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
-                    )
-                    amount += 35
-                    self.__overdraft_count += 1
-                elif amount > balance:
-                    print(f"Amount exceeds available balance. withdraw cannot be done.")
-                    return
-
-                if account_type == "checking":
-                    self.__checking_balance -= amount
-                else:
-                    self.__savings_balance -= amount
-                transaction = Transaction(
-                    "withdraw", amount, account_type, self.account_id, None
+            if amount > balance and account_type == "checking":
+                print(
+                    f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
-                self.transaction_history.append(transaction)
-                self.check_status(password)
-                return transaction
-            return False
+                amount += 35
+                self.__overdraft_count += 1
+            elif amount > balance:
+                print(f"Amount exceeds available balance. withdraw cannot be done.")
+                return
+
+            if account_type == "checking":
+                self.__checking_balance -= amount
+            else:
+                self.__savings_balance -= amount
+            transaction = Transaction(
+                "withdraw", amount, account_type, self.account_id, None
+            )
+            self.transaction_history.append(transaction)
+            self.check_status(password)
+            return transaction
         return False
 
     def transfer_locally(self, amount, to_account_type, password):
-        if self.is_authenticated(password):
-            if self.check_status(password):
-                if to_account_type == "savings":
-                    from_balance = self.__checking_balance
-                elif to_account_type == "checking":
-                    from_balance = self.__savings_balance
+        if (
+            self.is_authenticated(password)
+            and self.check_status(password)
+            and amount > 0
+        ):
+            if to_account_type == "savings":
+                from_balance = self.__checking_balance
+            elif to_account_type == "checking":
+                from_balance = self.__savings_balance
 
-                if amount > from_balance and to_account_type == "savings":
-                    print(
-                        f"Amount exceeds available checking balance. overdraft fee applied. Total amount: {amount + 35}"
-                    )
-                    amount += 35
-                    self.__overdraft_count += 1
-                elif amount > from_balance and to_account_type == "checking":
-                    print(f"Amount exceeds available balance. withdraw cannot be done.")
-                    return
-
-                if to_account_type == "checking":
-                    self.__savings_balance -= amount
-                    self.__checking_balance += amount
-                else:
-                    self.__checking_balance -= amount
-                    self.__savings_balance += amount
-                transaction = Transaction(
-                    "local transfer", amount, to_account_type, self.account_id, None
+            if amount > from_balance and to_account_type == "savings":
+                print(
+                    f"Amount exceeds available checking balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
-                self.transaction_history.append(transaction)
-                self.check_status(password)
-                return transaction
-            return False
+                amount += 35
+                self.__overdraft_count += 1
+            elif amount > from_balance and to_account_type == "checking":
+                print(f"Amount exceeds available balance. withdraw cannot be done.")
+                return
+
+            if to_account_type == "checking":
+                self.__savings_balance -= amount
+                self.__checking_balance += amount
+            else:
+                self.__checking_balance -= amount
+                self.__savings_balance += amount
+            transaction = Transaction(
+                "local transfer", amount, to_account_type, self.account_id, None
+            )
+            self.transaction_history.append(transaction)
+            self.check_status(password)
+            return transaction
         return False
 
     def transfer(self, amount, to_customer, password=None):
-        if self.is_authenticated(password):
-            if self.check_status(password):
-                if amount > self.__checking_balance:
-                    print(
-                        f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
-                    )
-                    amount += 35
-                    self.__overdraft_count += 1
-                self.__checking_balance -= amount
-                to_customer.__checking_balance += amount
-                transaction = Transaction(
-                    "transfer", amount, self.account_id, to_customer.account_id
+        if (
+            self.is_authenticated(password)
+            and self.check_status(password)
+            and amount > 0
+        ):
+            if amount > self.__checking_balance:
+                print(
+                    f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
-                self.transaction_history.append(transaction)
-                to_customer.transaction_history.append(transaction)
-                self.check_status(password)
-                return transaction
-            return False
+                amount += 35
+                self.__overdraft_count += 1
+            self.__checking_balance -= amount
+            to_customer.__checking_balance += amount
+            transaction = Transaction(
+                "transfer", amount, self.account_id, to_customer.account_id
+            )
+            self.transaction_history.append(transaction)
+            to_customer.transaction_history.append(transaction)
+            self.check_status(password)
+            return transaction
         return False
 
 
