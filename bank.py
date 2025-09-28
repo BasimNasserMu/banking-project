@@ -360,9 +360,12 @@ class Bank:
                         continue  # Return to Main menu
 
                     print(
-                        f"\nLogged in successfully to Account Id: {self.current_customer.account_id}\nSession Expires at: {self.current_token[1]}"
+                        f"\nLogged in successfully to Account Id: {self.current_customer.account_id}\n"
                     )
                     while True:
+                        print(
+                            f"Welcome {self.current_customer.frst_name}!\nSession Expires at: {self.current_token[1]}"
+                        )
                         choices = [
                             "Check Account Status",
                             "Check Balance",
@@ -377,14 +380,16 @@ class Bank:
                                 if self.current_customer.check_status(
                                     self.current_token[0]
                                 ):
-                                    print("\nAccount is Active")
+                                    print("\nAccount is Active\n")
+                                input("Press Enter to continue...")
                             case 1:
                                 print(
                                     f"\nChecking balance: {self.current_customer.get_balance('checking', self.current_token[0])}"
                                 )
                                 print(
-                                    f"Savings balance: {self.current_customer.get_balance('savings', self.current_token[0])}"
+                                    f"Savings balance: {self.current_customer.get_balance('savings', self.current_token[0])}\n"
                                 )
+                                input("Press Enter to continue...")
                             case 2:
                                 transactions_list = []
                                 for (
@@ -418,9 +423,11 @@ class Bank:
                                             floatfmt="12.2f",
                                         )
                                     )
+                                    input("Press Enter to continue...")
                                     del transactions_list
                                 else:
                                     print("\nNo Transactions.")
+                                    input("Press Enter to continue...")
 
                             case 3:
                                 print("\nDeposit into:")
@@ -440,6 +447,7 @@ class Bank:
                                     print(
                                         f"{amount} has been deposited, current account balance: {self.current_customer.get_balance(acc_type, self.current_token[0])}\n"
                                     )
+                                    input("Press Enter to continue...")
                             case 4:
                                 print("\nWithdraw from:")
                                 acc_type = (
@@ -461,6 +469,7 @@ class Bank:
                                     print(
                                         f"{amount} has been withdrawn, current account balance: {self.current_customer.get_balance(acc_type, self.current_token[0])}\n"
                                     )
+                                input("Press Enter to continue...")
 
                             case 5:
                                 print("\nTransfer:")
@@ -487,6 +496,7 @@ class Bank:
                                             print(
                                                 f"{amount} has transfered to checking, new balance of checking: {self.current_customer.get_balance('checking',self.current_token[0])}\n"
                                             )
+                                        input("Press Enter to continue...")
                                     case 1:
                                         amount = cutie.get_number(
                                             "\nAmount to transfer: "
@@ -501,6 +511,7 @@ class Bank:
                                             print(
                                                 f"{amount} has transfered to savings, new balance of savings: {self.current_customer.get_balance('savings',self.current_token[0])}\n"
                                             )
+                                        input("Press Enter to continue...")
 
                                     case 2:
                                         print("\nSelect Account to transfer to:")
@@ -531,6 +542,7 @@ class Bank:
                                             print(
                                                 f"{amount} has transfered to account: {to_account.account_id}, new balance of checking: {self.current_customer.get_balance('checking',self.current_token[0])}\n"
                                             )
+                                        input("Press Enter to continue...")
                             case 6 | _:
                                 self.handle_current_customer()
                                 break
