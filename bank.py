@@ -199,7 +199,7 @@ class Customer:
 
 
 class Bank:
-    def __init__(self, name):
+    def __init__(self, name="ACME"):
         self.name = name
         self.customers = []
         self.transactions = []
@@ -553,31 +553,34 @@ class Bank:
                         continue
                 case 2:
                     transactions_list = []
-                    for (transaction) in self.transactions:
-                        transactions_list.append([
-                                            transaction.type,
-                                            transaction.amount,
-                                            transaction.account_type,
-                                            transaction.from_acc,
-                                            transaction.to_acc,
-                                            transaction.timestamp,
-                                        ]
-                                    )
+                    for transaction in self.transactions:
+                        transactions_list.append(
+                            [
+                                transaction.type,
+                                transaction.amount,
+                                transaction.account_type,
+                                transaction.from_acc,
+                                transaction.to_acc,
+                                transaction.timestamp,
+                            ]
+                        )
                     if transactions_list != []:
                         headers = [
-                        "Type",
-                        "Amount",
-                        "Account Type",
-                        "from",
-                        "to",
-                        "Timestamp",
+                            "Type",
+                            "Amount",
+                            "Account Type",
+                            "from",
+                            "to",
+                            "Timestamp",
                         ]
-                        print("\n"+ tabulate(
-                        transactions_list,
-                        headers=headers,
-                        tablefmt="grid",
-                        floatfmt="12.2f",
-                        )
+                        print(
+                            "\n"
+                            + tabulate(
+                                transactions_list,
+                                headers=headers,
+                                tablefmt="grid",
+                                floatfmt="12.2f",
+                            )
                         )
                         input("Press Enter to continue...")
                         del transactions_list
@@ -585,7 +588,6 @@ class Bank:
                         print("\nNo Transactions.")
                         input("Press Enter to continue...")
 
-                    
                 case 3:
                     self.save_data()
                     print("Changes saved! Goodbye..")

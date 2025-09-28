@@ -1,4 +1,4 @@
 import bank
 
-SAB = bank.Bank("SAB")
-SAB.main()
+SDA = bank.Bank("SDA")
+SDA.main()
