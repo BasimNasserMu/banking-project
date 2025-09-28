@@ -367,22 +367,26 @@ class Bank:
                             f"Welcome {self.current_customer.frst_name}!\nSession Expires at: {self.current_token[1]}"
                         )
                         choices = [
+                            "Checks:",
                             "Check Account Status",
                             "Check Balance",
                             "Transaction History",
+                            "Operations:",
                             "Deposit",
                             "Withdraw",
                             "Transfer",
                             "Exit",
                         ]
-                        match cutie.select(choices):
-                            case 0:
+                        match cutie.select(choices, caption_indices=[0, 4]):
+                            case 1:
                                 if self.current_customer.check_status(
                                     self.current_token[0]
                                 ):
-                                    print("\nAccount is Active\n")
+                                    print(
+                                        f"\nAccount is Active. Overdraft count: {self.current_customer.overdraft_count}"
+                                    )
                                 input("Press Enter to continue...")
-                            case 1:
+                            case 2:
                                 print(
                                     f"\nChecking balance: {self.current_customer.get_balance('checking', self.current_token[0])}"
                                 )
@@ -390,7 +394,7 @@ class Bank:
                                     f"Savings balance: {self.current_customer.get_balance('savings', self.current_token[0])}\n"
                                 )
                                 input("Press Enter to continue...")
-                            case 2:
+                            case 3:
                                 transactions_list = []
                                 for (
                                     transaction
@@ -429,7 +433,7 @@ class Bank:
                                     print("\nNo Transactions.")
                                     input("Press Enter to continue...")
 
-                            case 3:
+                            case 5:
                                 print("\nDeposit into:")
                                 acc_type = (
                                     "savings"
@@ -448,7 +452,7 @@ class Bank:
                                         f"{amount} has been deposited, current account balance: {self.current_customer.get_balance(acc_type, self.current_token[0])}\n"
                                     )
                                     input("Press Enter to continue...")
-                            case 4:
+                            case 6:
                                 print("\nWithdraw from:")
                                 acc_type = (
                                     "savings"
@@ -471,7 +475,7 @@ class Bank:
                                     )
                                 input("Press Enter to continue...")
 
-                            case 5:
+                            case 7:
                                 print("\nTransfer:")
                                 match cutie.select(
                                     [
@@ -543,7 +547,7 @@ class Bank:
                                                 f"{amount} has transfered to account: {to_account.account_id}, new balance of checking: {self.current_customer.get_balance('checking',self.current_token[0])}\n"
                                             )
                                         input("Press Enter to continue...")
-                            case 6 | _:
+                            case 8 | _:
                                 self.handle_current_customer()
                                 break
                         continue
