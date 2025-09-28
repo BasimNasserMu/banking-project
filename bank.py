@@ -71,7 +71,7 @@ class Customer:
     def check_status(self, token=None):
         if self.is_authenticated(token):
             if self.is_active:
-                if self.__overdraft_count >= 2:
+                if self.__overdraft_count >= 2 or self.__checking_balance<-100:
                     self.is_active = False
                     print(
                         "Account deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
