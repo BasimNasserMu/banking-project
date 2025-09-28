@@ -39,11 +39,11 @@ class Customer:
         self.account_id = account_id
         self.frst_name = frst_name
         self.last_name = last_name
-        self.__password = password  # make password private. reference: https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes
+        self.__password = password
         self.__checking_balance = checking_balance
         self.__savings_balance = savings_balance
         self.transaction_history = transaction_history
-        self.__overdraft_count = overdraft_count
+        self.overdraft_count = overdraft_count
         self.is_active = is_active
         self.tokens_list = []
 
@@ -54,7 +54,7 @@ class Customer:
 
     def login(self, password):
         if password == self.__password:
-            token = self.Access_Token(1)  # 1 minute
+            token = self.Access_Token(2)  # 2 minute session
             self.tokens_list.append(token)
             return [token.token, token.expire]
 
@@ -63,30 +63,31 @@ class Customer:
             if accessToken.token == token:
                 if accessToken.expire > datetime.now():
                     return True
-                print("Token Expired. Login again.")
+                print("\nToken Expired. Login again.")
                 return False
-        print("Invalid Token.")
+        print("\nInvalid Token.")
         return False
 
     def check_status(self, token=None):
         if self.is_authenticated(token):
             if self.is_active:
-                if self.__overdraft_count >= 2 or self.__checking_balance<-100:
+                if self.overdraft_count >= 2 or self.__checking_balance <= -100:
                     self.is_active = False
                     print(
-                        "Account deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
+                        "\nAccount deactivated due to excessive overdrafts. pay the fees by depositing money or transferring money to reactivate"
                     )
                     return False
                 return True
             if not self.is_active:
                 if self.__checking_balance >= 0:
                     self.is_active = True
+                    self.overdraft_count = 0
                     print(
-                        "Account reactivated. Thank you for settling your overdraft fees."
+                        "\nAccount reactivated. Thank you for settling your overdraft fees."
                     )
                     return True
                 print(
-                    "Account is inactive due to excessive overdrafts. Please deposit money or transfer money to reactivate."
+                    "\nAccount is inactive due to excessive overdrafts. Please deposit money or transfer money to reactivate."
                 )
                 return False
             return False
@@ -129,7 +130,7 @@ class Customer:
                     f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
                 amount += 35
-                self.__overdraft_count += 1
+                self.overdraft_count += 1
             elif amount > balance:
                 print(f"Amount exceeds available balance. withdraw cannot be done.")
                 return
@@ -147,8 +148,8 @@ class Customer:
         return False
 
     def transfer_locally(self, amount, to_account_type, token):
-        if self.is_authenticated(token) and self.check_status(token) and amount > 0:
-            if to_account_type == "savings":
+        if self.is_authenticated(token) and amount > 0:
+            if to_account_type == "savings" and self.check_status(token):
                 from_balance = self.__checking_balance
             elif to_account_type == "checking":
                 from_balance = self.__savings_balance
@@ -158,7 +159,7 @@ class Customer:
                     f"Amount exceeds available checking balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
                 amount += 35
-                self.__overdraft_count += 1
+                self.overdraft_count += 1
             elif amount > from_balance and to_account_type == "checking":
                 print(f"Amount exceeds available balance. withdraw cannot be done.")
                 return
@@ -184,7 +185,7 @@ class Customer:
                     f"Amount exceeds available balance. overdraft fee applied. Total amount: {amount + 35}"
                 )
                 amount += 35
-                self.__overdraft_count += 1
+                self.overdraft_count += 1
             self.__checking_balance -= amount
             to_customer.__checking_balance += amount
             transaction = Transaction(
@@ -217,6 +218,8 @@ class Bank:
                             password=row[3],
                             checking_balance=float(row[4]),
                             savings_balance=float(row[5]),
+                            is_active=bool(row[6]),
+                            overdraft_count=int(row[7]),
                         )
                     )
         with open("data/transactions.csv", mode="r") as file:
@@ -252,6 +255,8 @@ class Bank:
                     "password",
                     "checking_balance",
                     "savings_balance",
+                    "is_active",
+                    "overdraft_count",
                 ]
             )
             for customer in self.customers:
@@ -263,6 +268,8 @@ class Bank:
                         customer._Customer__password,
                         customer._Customer__checking_balance,
                         customer._Customer__savings_balance,
+                        customer.is_active,
+                        customer.overdraft_count,
                     ]
                 )
         with open("data/transactions.csv", mode="w", newline="") as file:
